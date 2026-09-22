@@ -1,4 +1,4 @@
-# 🚀 DeveloperDash
+#  DeveloperDash
 
 A modern productivity dashboard built with Next.js, TypeScript, Tailwind CSS, Zustand, and Shadcn UI.
 
@@ -6,7 +6,7 @@ DeveloperDash is a responsive SaaS-style project management platform designed to
 
 ---
 
-## ✨ Features
+##  Features
 
 ### 📊 Dashboard
 - Interactive statistics cards
