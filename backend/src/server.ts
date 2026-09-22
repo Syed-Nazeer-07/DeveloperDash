@@ -19,6 +19,14 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Health Check
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "DeveloperDash API is running"
+  });
+});
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
