@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Project, Task, Activity, Notification, Settings, User } from '../types';
 import { mockProjects, mockTasks, mockActivities, mockNotifications, defaultSettings, mockUsers } from '../data/mockData';
 
@@ -38,9 +39,11 @@ interface DashboardState {
   toggleDarkMode: () => void;
 }
 
-export const useStore = create<DashboardState>((set) => ({
-  currentUser: mockUsers[0],
-  updateUser: (updates) => set((state) => ({ currentUser: { ...state.currentUser, ...updates } })),
+export const useStore = create<DashboardState>()(
+  persist(
+    (set) => ({
+      currentUser: mockUsers[0],
+      updateUser: (updates) => set((state) => ({ currentUser: { ...state.currentUser, ...updates } })),
   
   projects: mockProjects,
   addProject: (project) => set((state) => ({ projects: [project, ...state.projects] })),
@@ -103,4 +106,18 @@ export const useStore = create<DashboardState>((set) => ({
     }
     return { isDarkMode: newMode };
   }),
-}));
+    }),
+    {
+      name: 'developer-dashboard-storage',
+      partialize: (state) => ({ 
+        currentUser: state.currentUser,
+        settings: state.settings,
+        isDarkMode: state.isDarkMode,
+        projects: state.projects,
+        tasks: state.tasks,
+        activities: state.activities,
+        notifications: state.notifications
+      }),
+    }
+  )
+);

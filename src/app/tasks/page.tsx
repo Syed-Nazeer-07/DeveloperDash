@@ -72,7 +72,7 @@ export default function TasksPage() {
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={(val) => val && setSortBy(val)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>

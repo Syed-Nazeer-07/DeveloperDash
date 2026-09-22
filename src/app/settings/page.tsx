@@ -11,17 +11,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+import { useState } from 'react';
+
 export default function SettingsPage() {
   const { settings, updateSettings, currentUser, updateUser, isDarkMode, toggleDarkMode } = useStore();
 
+  const [profileData, setProfileData] = useState({
+    name: currentUser.name || '',
+    role: currentUser.role || '',
+    bio: currentUser.bio || '',
+  });
+
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    updateUser({
-      name: formData.get('name') as string,
-      role: formData.get('role') as string,
-      bio: formData.get('bio') as string,
-    });
+    updateUser(profileData);
     toast.success('Profile updated successfully');
   };
 
@@ -52,15 +55,27 @@ export default function SettingsPage() {
                 <form onSubmit={handleProfileSave} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" name="name" defaultValue={currentUser.name} />
+                    <Input 
+                      id="name" 
+                      value={profileData.name} 
+                      onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Input id="role" name="role" defaultValue={currentUser.role} />
+                    <Input 
+                      id="role" 
+                      value={profileData.role} 
+                      onChange={(e) => setProfileData({...profileData, role: e.target.value})} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
-                    <Textarea id="bio" name="bio" defaultValue={currentUser.bio} />
+                    <Textarea 
+                      id="bio" 
+                      value={profileData.bio} 
+                      onChange={(e) => setProfileData({...profileData, bio: e.target.value})} 
+                    />
                   </div>
                   <Button type="submit">Save Changes</Button>
                 </form>

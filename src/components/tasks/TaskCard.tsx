@@ -2,7 +2,7 @@ import { Task } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarIcon, Clock, CheckCircle2, Circle, MoreVertical, Trash2, Check, ArrowRight } from 'lucide-react';
+import { CalendarIcon, Clock, CheckCircle2, Circle, MoreVertical, Trash2, Check, ArrowRight, FolderKanban } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -15,7 +15,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task }: TaskCardProps) {
-  const { updateTask, deleteTask, currentUser, addActivity } = useStore();
+  const { updateTask, deleteTask, currentUser, addActivity, projects } = useStore();
+  const project = projects.find(p => p.id === task.projectId);
 
   const priorityColors: Record<Task['priority'], string> = {
     Low: 'bg-green-500/10 text-green-500',
@@ -56,6 +57,12 @@ export function TaskCard({ task }: TaskCardProps) {
                   <CalendarIcon className="mr-1 h-3 w-3" />
                   {format(new Date(task.dueDate), 'MMM d, yyyy')}
                 </span>
+                {project && (
+                  <span className="flex items-center gap-1 border-l pl-2 border-border max-w-[150px]">
+                    <FolderKanban className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{project.name}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>

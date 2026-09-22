@@ -52,7 +52,7 @@ export default function ProjectsPage() {
                 <SelectItem value="On Hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={(val) => val && setSortBy(val)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
