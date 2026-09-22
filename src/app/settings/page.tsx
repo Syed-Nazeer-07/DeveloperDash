@@ -16,6 +16,8 @@ import { useState } from 'react';
 export default function SettingsPage() {
   const { settings, updateSettings, currentUser, updateUser, isDarkMode, toggleDarkMode } = useStore();
 
+  if (!currentUser) return null;
+
   const [profileData, setProfileData] = useState({
     name: currentUser.name || '',
     role: currentUser.role || '',

@@ -11,7 +11,13 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { isDarkMode } = useStore();
+  const { isDarkMode, fetchUsers, fetchProjects, fetchTasks, isLoadingUsers } = useStore();
+
+  useEffect(() => {
+    fetchUsers();
+    fetchProjects();
+    fetchTasks();
+  }, [fetchUsers, fetchProjects, fetchTasks]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -20,6 +26,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  if (isLoadingUsers) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">

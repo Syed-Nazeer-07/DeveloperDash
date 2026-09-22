@@ -241,3 +241,11 @@ https://github.com/Syed-Nazeer-07
 ## 📄 License
 
 This project is intended for educational and portfolio purposes.
+
+## Week 3 Summary
+- Integrated a dedicated API client layer in \src/lib/api.ts\ for data fetching.
+- Updated the Zustand store to fetch users, projects, and tasks from the backend instead of using mock data.
+- Updated the \DashboardLayout.tsx\ and components to properly reflect loading and error states.
+- Connected \CreateProjectModal\, \CreateTaskModal\, and \TaskCard\ to the live API for creating, updating, and deleting operations.
+- Fixed TypeScript strict errors relating to the newly integrated models and \
+ull\ user cases.

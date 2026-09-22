@@ -15,7 +15,9 @@ import { TaskCard } from '@/components/tasks/TaskCard';
 export default function ProjectDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { projects, tasks, deleteProject, currentUser, addActivity } = useStore();
+  const { projects, tasks, updateProject, deleteProject, currentUser, addActivity } = useStore();
+
+  if (!currentUser) return null;
   
   const projectId = params.id as string;
   const project = projects.find(p => p.id === projectId);

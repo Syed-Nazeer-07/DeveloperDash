@@ -27,6 +27,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!currentUser) return;
     deleteProject(project.id);
     addActivity({ userId: currentUser.id, action: 'deleted project', target: project.name });
     toast.success('Project deleted');

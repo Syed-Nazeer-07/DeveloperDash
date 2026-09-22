@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useStore } from '@/store';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -23,6 +24,7 @@ const taskSchema = z.object({
 
 export function CreateTaskModal() {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { addTask, projects, currentUser, addActivity } = useStore();
   
   const form = useForm<z.infer<typeof taskSchema>>({
@@ -36,23 +38,32 @@ export function CreateTaskModal() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof taskSchema>) => {
-    const newTask = {
-      id: Math.random().toString(36).substring(7),
-      title: values.title,
-      description: values.description,
-      dueDate: values.dueDate,
-      projectId: values.projectId,
-      priority: values.priority,
-      status: 'Todo' as const,
-      assignee: currentUser,
-    };
-    
-    addTask(newTask);
-    addActivity({ userId: currentUser.id, action: 'created task', target: newTask.title });
-    toast.success('Task created successfully');
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (values: z.infer<typeof taskSchema>) => {
+    if (!currentUser) return;
+    setIsSubmitting(true);
+    try {
+      const newTaskData = {
+        title: values.title,
+        description: values.description,
+        dueDate: values.dueDate,
+        projectId: values.projectId,
+        priority: values.priority,
+        status: 'Todo' as const,
+        assignee: currentUser || undefined,
+      };
+      
+      const createdTask = await api.createTask(newTaskData);
+      
+      addTask(createdTask);
+      addActivity({ userId: currentUser.id, action: 'created task', target: createdTask.title });
+      toast.success('Task created successfully');
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create task');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -137,7 +148,9 @@ export function CreateTaskModal() {
               )}
             />
             <div className="flex justify-end pt-4">
-              <Button type="submit">Create Task</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating...' : 'Create Task'}
+              </Button>
             </div>
           </form>
         </Form>

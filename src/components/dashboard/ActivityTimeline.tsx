@@ -9,6 +9,8 @@ import { formatDistanceToNow } from 'date-fns';
 export function ActivityTimeline() {
   const { activities, currentUser } = useStore();
 
+  if (!currentUser) return null;
+
   return (
     <Card>
       <CardHeader>

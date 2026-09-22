@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useStore } from '@/store';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
-import { mockUsers } from '@/data/mockData';
+import { api } from '@/lib/api';
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
@@ -22,7 +22,8 @@ const projectSchema = z.object({
 
 export function CreateProjectModal() {
   const [open, setOpen] = useState(false);
-  const { addProject, currentUser, addActivity } = useStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addProject, currentUser, addActivity, users } = useStore();
   
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -33,22 +34,31 @@ export function CreateProjectModal() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof projectSchema>) => {
-    const newProject = {
-      id: Math.random().toString(36).substring(7),
-      name: values.name,
-      description: values.description,
-      dueDate: values.dueDate,
-      progress: 0,
-      status: 'Active' as const,
-      teamMembers: [currentUser, mockUsers[1]],
-    };
-    
-    addProject(newProject);
-    addActivity({ userId: currentUser.id, action: 'created project', target: newProject.name });
-    toast.success('Project created successfully');
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (values: z.infer<typeof projectSchema>) => {
+    if (!currentUser) return;
+    setIsSubmitting(true);
+    try {
+      const newProjectData = {
+        name: values.name,
+        description: values.description,
+        dueDate: values.dueDate,
+        progress: 0,
+        status: 'Active' as const,
+        teamMembers: [currentUser, users[1] || currentUser] as import("@/types").User[],
+      };
+      
+      const createdProject = await api.createProject(newProjectData);
+      
+      addProject(createdProject);
+      addActivity({ userId: currentUser.id, action: 'created project', target: createdProject.name });
+      toast.success('Project created successfully');
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create project');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -102,7 +112,9 @@ export function CreateProjectModal() {
               )}
             />
             <div className="flex justify-end pt-4">
-              <Button type="submit">Create Project</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating...' : 'Create Project'}
+              </Button>
             </div>
           </form>
         </Form>

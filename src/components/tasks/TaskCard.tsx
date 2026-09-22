@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Task } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 interface TaskCardProps {
   task: Task;
@@ -16,6 +18,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task }: TaskCardProps) {
   const { updateTask, deleteTask, currentUser, addActivity, projects } = useStore();
+  const [isUpdating, setIsUpdating] = useState(false);
   const project = projects.find(p => p.id === task.projectId);
 
   const priorityColors: Record<Task['priority'], string> = {
@@ -30,20 +33,37 @@ export function TaskCard({ task }: TaskCardProps) {
     Completed: <CheckCircle2 className="h-5 w-5 text-green-500" />,
   };
 
-  const handleStatusChange = (newStatus: Task['status']) => {
-    updateTask(task.id, { status: newStatus });
-    addActivity({ userId: currentUser.id, action: `moved task to ${newStatus}`, target: task.title });
-    toast.success(`Task marked as ${newStatus}`);
+  const handleStatusChange = async (newStatus: Task['status']) => {
+    if (!currentUser) return;
+    setIsUpdating(true);
+    try {
+      const updatedTask = await api.updateTask(task.id, { status: newStatus });
+      updateTask(task.id, updatedTask);
+      addActivity({ userId: currentUser.id, action: `moved task to ${newStatus}`, target: task.title });
+      toast.success(`Task marked as ${newStatus}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update task status');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleDelete = () => {
-    deleteTask(task.id);
-    addActivity({ userId: currentUser.id, action: 'deleted task', target: task.title });
-    toast.success('Task deleted');
+  const handleDelete = async () => {
+    if (!currentUser) return;
+    setIsUpdating(true);
+    try {
+      await api.deleteTask(task.id);
+      deleteTask(task.id);
+      addActivity({ userId: currentUser.id, action: 'deleted task', target: task.title });
+      toast.success('Task deleted');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete task');
+      setIsUpdating(false); // Only unset if it failed, else it's unmounted anyway
+    }
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow group">
+    <Card className={cn("hover:shadow-md transition-shadow group", isUpdating && "opacity-50 pointer-events-none")}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
