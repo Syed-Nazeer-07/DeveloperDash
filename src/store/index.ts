@@ -1,0 +1,106 @@
+import { create } from 'zustand';
+import { Project, Task, Activity, Notification, Settings, User } from '../types';
+import { mockProjects, mockTasks, mockActivities, mockNotifications, defaultSettings, mockUsers } from '../data/mockData';
+
+interface DashboardState {
+  currentUser: User;
+  updateUser: (updates: Partial<User>) => void;
+  
+  projects: Project[];
+  addProject: (project: Project) => void;
+  updateProject: (id: string, updates: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
+  
+  tasks: Task[];
+  addTask: (task: Task) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+  
+  activities: Activity[];
+  addActivity: (activity: Omit<Activity, 'id' | 'timestamp'>) => void;
+  
+  notifications: Notification[];
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  deleteNotification: (id: string) => void;
+  
+  settings: Settings;
+  updateSettings: (updates: Partial<Settings>) => void;
+
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  statusFilter: string | null;
+  setStatusFilter: (status: string | null) => void;
+  priorityFilter: string | null;
+  setPriorityFilter: (priority: string | null) => void;
+  
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+}
+
+export const useStore = create<DashboardState>((set) => ({
+  currentUser: mockUsers[0],
+  updateUser: (updates) => set((state) => ({ currentUser: { ...state.currentUser, ...updates } })),
+  
+  projects: mockProjects,
+  addProject: (project) => set((state) => ({ projects: [project, ...state.projects] })),
+  updateProject: (id, updates) => set((state) => ({
+    projects: state.projects.map((p) => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deleteProject: (id) => set((state) => ({ projects: state.projects.filter((p) => p.id !== id) })),
+  
+  tasks: mockTasks,
+  addTask: (task) => set((state) => ({ tasks: [task, ...state.tasks] })),
+  updateTask: (id, updates) => set((state) => ({
+    tasks: state.tasks.map((t) => t.id === id ? { ...t, ...updates } : t)
+  })),
+  deleteTask: (id) => set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+  
+  activities: mockActivities,
+  addActivity: (activity) => set((state) => ({
+    activities: [
+      {
+        ...activity,
+        id: Math.random().toString(36).substring(7),
+        timestamp: new Date().toISOString(),
+      },
+      ...state.activities,
+    ]
+  })),
+  
+  notifications: mockNotifications,
+  markNotificationRead: (id) => set((state) => ({
+    notifications: state.notifications.map((n) => n.id === id ? { ...n, read: true } : n)
+  })),
+  markAllNotificationsRead: () => set((state) => ({
+    notifications: state.notifications.map((n) => ({ ...n, read: true }))
+  })),
+  deleteNotification: (id) => set((state) => ({
+    notifications: state.notifications.filter((n) => n.id !== id)
+  })),
+  
+  settings: defaultSettings,
+  updateSettings: (updates) => set((state) => ({
+    settings: { ...state.settings, ...updates }
+  })),
+
+  searchQuery: '',
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  statusFilter: null,
+  setStatusFilter: (status) => set({ statusFilter: status }),
+  priorityFilter: null,
+  setPriorityFilter: (priority) => set({ priorityFilter: priority }),
+  
+  isDarkMode: true,
+  toggleDarkMode: () => set((state) => {
+    const newMode = !state.isDarkMode;
+    if (typeof document !== 'undefined') {
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    return { isDarkMode: newMode };
+  }),
+}));
