@@ -161,9 +161,11 @@ export function TopNav() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/settings')}>Profile & Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => {
+              <DropdownMenuItem onSelect={(e) => {
+                e.preventDefault();
                 logout();
-                router.push('/login');
+                localStorage.removeItem('developer-dashboard-storage');
+                window.location.href = '/login';
               }}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
