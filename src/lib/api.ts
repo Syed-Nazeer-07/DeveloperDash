@@ -1,6 +1,6 @@
 import { User, Project, Task } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://developerdash-api.onrender.com/api';
 
 interface ApiResponse<T> {
   success: boolean;
