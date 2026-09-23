@@ -16,9 +16,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { navigation } from './Sidebar';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
 
 export function TopNav() {
-  const { searchQuery, setSearchQuery, isDarkMode, toggleDarkMode, currentUser, notifications, markNotificationRead, markAllNotificationsRead } = useStore();
+  const { searchQuery, setSearchQuery, isDarkMode, toggleDarkMode, notifications, markNotificationRead, markAllNotificationsRead } = useStore();
+  const { user: currentUser, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -159,7 +161,12 @@ export function TopNav() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/settings')}>Profile & Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => {
+                e.preventDefault();
+                logout();
+                localStorage.removeItem('developer-dashboard-storage');
+                window.location.href = '/login';
+              }}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

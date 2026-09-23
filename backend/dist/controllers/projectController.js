@@ -1,45 +1,16 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteProject = exports.updateProject = exports.createProject = exports.getProject = exports.getProjects = void 0;
-const projectService = __importStar(require("../services/projectService"));
+const Project_1 = __importDefault(require("../models/Project"));
+const Task_1 = __importDefault(require("../models/Task"));
 const validators_1 = require("../validators");
 const response_1 = require("../utils/response");
-const getProjects = (req, res, next) => {
+const getProjects = async (req, res, next) => {
     try {
-        const projects = projectService.getAllProjects();
+        const projects = await Project_1.default.find({ user: req.user._id }).populate('teamMembers').sort({ createdAt: -1 });
         return (0, response_1.sendSuccess)(res, projects);
     }
     catch (error) {
@@ -47,33 +18,39 @@ const getProjects = (req, res, next) => {
     }
 };
 exports.getProjects = getProjects;
-const getProject = (req, res, next) => {
+const getProject = async (req, res, next) => {
     try {
-        const project = projectService.getProjectById(req.params.id);
+        const project = await Project_1.default.findOne({ _id: req.params.id, user: req.user._id }).populate('teamMembers');
         if (!project)
             return (0, response_1.sendError)(res, 'Project not found', 404);
-        return (0, response_1.sendSuccess)(res, project);
+        // Also get tasks for this project
+        const tasks = await Task_1.default.find({ projectId: project._id });
+        return (0, response_1.sendSuccess)(res, { ...project.toJSON(), tasks });
     }
     catch (error) {
         next(error);
     }
 };
 exports.getProject = getProject;
-const createProject = (req, res, next) => {
+const createProject = async (req, res, next) => {
     try {
         const validatedData = validators_1.projectSchema.parse(req.body);
-        const project = projectService.createProject(validatedData);
-        return (0, response_1.sendSuccess)(res, project, 201);
+        const project = await Project_1.default.create({
+            ...validatedData,
+            user: req.user._id,
+            teamMembers: [req.user._id],
+        });
+        return (0, response_1.sendSuccess)(res, await project.populate('teamMembers'), 201);
     }
     catch (error) {
         next(error);
     }
 };
 exports.createProject = createProject;
-const updateProject = (req, res, next) => {
+const updateProject = async (req, res, next) => {
     try {
         const validatedData = validators_1.projectSchema.partial().parse(req.body);
-        const project = projectService.updateProject(req.params.id, validatedData);
+        const project = await Project_1.default.findOneAndUpdate({ _id: req.params.id, user: req.user._id }, validatedData, { new: true, runValidators: true }).populate('teamMembers');
         if (!project)
             return (0, response_1.sendError)(res, 'Project not found', 404);
         return (0, response_1.sendSuccess)(res, project);
@@ -83,11 +60,13 @@ const updateProject = (req, res, next) => {
     }
 };
 exports.updateProject = updateProject;
-const deleteProject = (req, res, next) => {
+const deleteProject = async (req, res, next) => {
     try {
-        const success = projectService.deleteProject(req.params.id);
-        if (!success)
+        const project = await Project_1.default.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+        if (!project)
             return (0, response_1.sendError)(res, 'Project not found', 404);
+        // Delete associated tasks
+        await Task_1.default.deleteMany({ projectId: req.params.id });
         return (0, response_1.sendSuccess)(res, null);
     }
     catch (error) {

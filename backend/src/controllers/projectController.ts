@@ -1,41 +1,55 @@
-import { Request, Response, NextFunction } from 'express';
-import * as projectService from '../services/projectService';
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from '../middleware/auth';
+import Project from '../models/Project';
+import Task from '../models/Task';
 import { projectSchema } from '../validators';
 import { sendSuccess, sendError } from '../utils/response';
 
-export const getProjects = (req: Request, res: Response, next: NextFunction) => {
+export const getProjects = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const projects = projectService.getAllProjects();
+    const projects = await Project.find({ user: req.user._id }).populate('teamMembers').sort({ createdAt: -1 });
     return sendSuccess(res, projects);
   } catch (error) {
     next(error);
   }
 };
 
-export const getProject = (req: Request, res: Response, next: NextFunction) => {
+export const getProject = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const project = projectService.getProjectById(req.params.id as string);
+    const project = await Project.findOne({ _id: req.params.id, user: req.user._id }).populate('teamMembers');
     if (!project) return sendError(res, 'Project not found', 404);
-    return sendSuccess(res, project);
+    
+    // Also get tasks for this project
+    const tasks = await Task.find({ projectId: project._id });
+    
+    return sendSuccess(res, { ...project.toJSON(), tasks });
   } catch (error) {
     next(error);
   }
 };
 
-export const createProject = (req: Request, res: Response, next: NextFunction) => {
+export const createProject = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const validatedData = projectSchema.parse(req.body);
-    const project = projectService.createProject(validatedData);
-    return sendSuccess(res, project, 201);
+    const project = await Project.create({
+      ...validatedData,
+      user: req.user._id,
+      teamMembers: [req.user._id],
+    });
+    return sendSuccess(res, await project.populate('teamMembers'), 201);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateProject = (req: Request, res: Response, next: NextFunction) => {
+export const updateProject = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const validatedData = projectSchema.partial().parse(req.body);
-    const project = projectService.updateProject(req.params.id as string, validatedData);
+    const project = await Project.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },
+      validatedData,
+      { new: true, runValidators: true }
+    ).populate('teamMembers');
     if (!project) return sendError(res, 'Project not found', 404);
     return sendSuccess(res, project);
   } catch (error) {
@@ -43,10 +57,14 @@ export const updateProject = (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export const deleteProject = (req: Request, res: Response, next: NextFunction) => {
+export const deleteProject = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const success = projectService.deleteProject(req.params.id as string);
-    if (!success) return sendError(res, 'Project not found', 404);
+    const project = await Project.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    if (!project) return sendError(res, 'Project not found', 404);
+    
+    // Delete associated tasks
+    await Task.deleteMany({ projectId: req.params.id });
+    
     return sendSuccess(res, null);
   } catch (error) {
     next(error);

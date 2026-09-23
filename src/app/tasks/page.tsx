@@ -6,6 +6,7 @@ import { TaskCard } from '@/components/tasks/TaskCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CheckSquare } from 'lucide-react';
 import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
+import { AIGenerateTasksModal } from '@/components/tasks/AIGenerateTasksModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 
@@ -43,7 +44,10 @@ export default function TasksPage() {
               Track and manage all your tasks across projects.
             </p>
           </div>
-          <CreateTaskModal />
+          <div className="flex gap-2">
+            <AIGenerateTasksModal />
+            <CreateTaskModal />
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
