@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from '@/store';
+import { useAuthStore } from '@/store/authStore';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -11,23 +12,69 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function SettingsPage() {
-  const { settings, updateSettings, currentUser, updateUser, isDarkMode, toggleDarkMode } = useStore();
-
-  if (!currentUser) return null;
+  const { settings, updateSettings, updateUser, isDarkMode, toggleDarkMode } = useStore();
+  const { user, isLoading } = useAuthStore();
 
   const [profileData, setProfileData] = useState({
-    name: currentUser.name || '',
-    role: currentUser.role || '',
-    bio: currentUser.bio || '',
+    name: user?.name || '',
+    role: user?.role || '',
+    bio: user?.bio || '',
   });
 
-  const handleProfileSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        role: user.role || '',
+        bio: user.bio || '',
+      });
+    }
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-[60vh] w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-[60vh] w-full flex-col items-center justify-center space-y-4">
+          <AlertCircle className="h-10 w-10 text-muted-foreground" />
+          <h2 className="text-xl font-semibold">Not Authenticated</h2>
+          <p className="text-muted-foreground">Please log in to view and edit your settings.</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUser(profileData);
-    toast.success('Profile updated successfully');
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const updatedUser = await api.updateUser(user._id || user.id, profileData);
+      updateUser(updatedUser);
+      // Also update authStore directly
+      useAuthStore.setState({ user: { ...user, ...updatedUser } });
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

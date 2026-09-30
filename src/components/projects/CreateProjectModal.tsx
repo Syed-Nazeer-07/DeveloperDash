@@ -23,7 +23,7 @@ const projectSchema = z.object({
 export function CreateProjectModal() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addProject, currentUser, addActivity, users } = useStore();
+  const { addProject, currentUser, addActivity, users, addNotification } = useStore();
   
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -50,7 +50,17 @@ export function CreateProjectModal() {
       const createdProject = await api.createProject(newProjectData);
       
       addProject(createdProject);
-      addActivity({ userId: currentUser.id, action: 'created project', target: createdProject.name });
+      
+      const userId = currentUser.id || (currentUser as any)._id;
+      addActivity({ userId, action: 'created project', target: createdProject.name });
+      
+      addNotification({
+        title: 'New Project Created',
+        message: `You created "${createdProject.name}"`,
+        read: false,
+        link: `/projects/${createdProject.id || (createdProject as any)._id}`,
+      });
+      
       toast.success('Project created successfully');
       setOpen(false);
       form.reset();

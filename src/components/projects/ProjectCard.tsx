@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 interface ProjectCardProps {
   project: Project;
@@ -22,20 +23,25 @@ export function ProjectCard({ project }: ProjectCardProps) {
     'On Hold': 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20',
   };
 
-  const { deleteProject, currentUser, addActivity } = useStore();
+  const { deleteProject, fetchProjects, currentUser, addActivity } = useStore();
   const router = useRouter();
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
+    
+    // Optimistic delete
     deleteProject(project.id);
-    addActivity({ userId: currentUser.id, action: 'deleted project', target: project.name });
-    toast.success('Project deleted');
-  };
-
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.info('Edit functionality via modal (Implementation pending)');
+    
+    try {
+      await api.deleteProject(project.id);
+      addActivity({ userId: currentUser.id, action: 'deleted project', target: project.name });
+      toast.success('Project deleted');
+    } catch (error: any) {
+      // Rollback
+      fetchProjects();
+      toast.error(error.message || 'Failed to delete project');
+    }
   };
 
   return (
@@ -52,9 +58,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleEdit}>
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </DropdownMenuItem>
                 <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                 </DropdownMenuItem>

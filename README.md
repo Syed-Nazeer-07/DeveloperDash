@@ -1,251 +1,81 @@
-#  DeveloperDash
+# DeveloperDash
 
-A modern productivity dashboard built with Next.js, TypeScript, Tailwind CSS, Zustand, and Shadcn UI.
+A modern productivity dashboard built with Next.js, Node.js, Express, MongoDB, and Gemini AI.
 
-DeveloperDash is a responsive SaaS-style project management platform designed to help teams organize projects, track tasks, monitor productivity, and visualize progress through an intuitive dashboard experience.
+## Architecture
 
----
-
-##  Features
-
-### 📊 Dashboard
-- Interactive statistics cards
-- Productivity overview
-- Recent project activity
-- Progress tracking
-- Activity timeline
-
-### 📁 Project Management
-- Create projects
-- Edit projects
-- Delete projects
-- Project detail pages
-- Progress tracking
-- Status management
-- Search and filtering
-
-### ✅ Task Management
-- Create tasks
-- Edit tasks
-- Delete tasks
-- Status updates
-- Priority management
-- Assignee tracking
-- Search and filtering
-- Sorting options
-
-### 🔔 Notifications
-- Notification center
-- Unread counters
-- Mark as read
-- Mark all as read
-- Delete notifications
-
-### 📈 Analytics
-- Task status distribution
-- Project progress visualization
-- Productivity trends
-- Real-time chart updates
-
-### ⚙️ Settings
-- User profile management
-- Theme preferences
-- Notification preferences
-- Application settings
-
-### 🎨 User Experience
-- Dark / Light Mode
-- Mobile Responsive Design
-- Accessible Components
-- Loading States
-- Empty States
-- Interactive Navigation
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- Next.js 15
-- React
-- TypeScript
-
-### Styling
-- Tailwind CSS
-- Shadcn UI
-- Lucide Icons
-
-### State Management
-- Zustand
-
-### Forms & Validation
-- React Hook Form
-- Zod
-
-### Charts & Analytics
-- Recharts
-
-### Notifications
-- Sonner
-
----
-
-## 📂 Project Structure
-
-```text
-src/
-│
-├── app/
-│   ├── analytics/
-│   ├── projects/
-│   ├── tasks/
-│   ├── settings/
-│   └── page.tsx
-│
-├── components/
-│   ├── dashboard/
-│   ├── layout/
-│   ├── projects/
-│   ├── tasks/
-│   ├── shared/
-│   └── ui/
-│
-├── data/
-├── store/
-├── types/
-├── lib/
-└── hooks/
+```mermaid
+graph TD
+    Client[Next.js Frontend - Vercel] --> |HTTPS/REST| API[Express Backend - Render]
+    API --> |Mongoose| DB[(MongoDB Atlas)]
+    API --> |GenAI SDK| Gemini[Google Gemini API]
 ```
 
----
+## MongoDB Schema Overview
 
-## 📸 Screenshots
+- **User**: Stores authentication and profile data (name, email, password, avatarUrl).
+- **Project**: Represents a project container. References `User` (owner) and `teamMembers`. Contains `name`, `description`, `status`, `progress`, and `dueDate`.
+- **Task**: Belongs to a `Project` and is optionally assigned to a `User`. Contains `title`, `description`, `status`, `priority`, and `dueDate`.
 
-### Dashboard
+## Authentication Flow
 
-Insert dashboard screenshot here
+1. **Registration**: User POSTs to `/api/auth/register` with name, email, password. Password hashed via bcrypt, user saved.
+2. **Login**: User POSTs to `/api/auth/login`. Returns a JWT token.
+3. **Session**: Frontend stores token in `localStorage`. 
+4. **Protection**: Next.js uses `AuthProvider` to redirect unauthenticated users to `/login`. API uses `protect` middleware checking `Authorization: Bearer <token>`.
 
-### Projects
+## API Documentation
 
-Insert projects screenshot here
+### Auth
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Authenticate & get token
+- `GET /api/auth/me` - Get current user (protected)
 
-### Tasks
+### Projects (Protected)
+- `GET /api/projects` - Get all user's projects
+- `GET /api/projects/:id` - Get specific project
+- `POST /api/projects` - Create project
+- `PUT /api/projects/:id` - Update project
+- `DELETE /api/projects/:id` - Delete project
 
-Insert tasks screenshot here
+### Tasks (Protected)
+- `GET /api/tasks` - Get all tasks (supports query filtering)
+- `GET /api/tasks/:id` - Get specific task
+- `POST /api/tasks` - Create task
+- `PUT /api/tasks/:id` - Update task
+- `PATCH /api/tasks/:id/status` - Update task status
+- `DELETE /api/tasks/:id` - Delete task
 
-### Analytics
+### AI Features (Protected)
+- `POST /api/ai/generate-tasks` - Uses Gemini AI to analyze a project description and returns suggested tasks with priorities.
 
-Insert analytics screenshot here
+## AI Feature: Task Generator
 
-### Settings
+The **AI Task Generator** utilizes the Google Gemini API to analyze a project's title and description. It automatically creates actionable tasks, complete with priority suggestions, and inserts them directly into the selected project.
 
-Insert settings screenshot here
+- **Endpoint:** `POST /api/ai/generate-tasks`
+- **Frontend Integration:** Accessible via the "AI Generate Tasks" button on the Tasks page.
 
----
+## Deployment URLs
 
-## 🚀 Getting Started
+- **Frontend (Vercel):** (Requires your Vercel deployment URL)
+- **Backend (Render):** `https://developerdash-api.onrender.com`
 
-### Clone Repository
+## Environment Variables
 
-```bash
-git clone https://github.com/Syed-Nazeer-07/DeveloperDash.git
+### Backend `.env`
+```
+PORT=5000
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/developerdash
+JWT_SECRET=your_jwt_secret_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### Navigate to Project
-
-```bash
-cd DeveloperDash
+### Frontend `.env`
+```
+NEXT_PUBLIC_API_URL=https://developerdash-api.onrender.com/api
 ```
 
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Start Development Server
-
-```bash
-npm run dev
-```
-
-### Open Browser
-
-```text
-http://localhost:3000
-```
-
----
-
-## 📱 Responsive Design
-
-DeveloperDash is optimized for:
-
-- Desktop
-- Laptop
-- Tablet
-- Mobile Devices
-
----
-
-## 🎯 Internship Task Coverage
-
-This project was developed as part of a Full Stack Development Internship.
-
-Implemented requirements include:
-
-- Dashboard Landing Page
-- Navigation System
-- User Profile Section
-- Project Cards
-- Task Cards
-- Progress Indicators
-- Search Functionality
-- Filter Functionality
-- Responsive Design
-- Loading States
-- Empty States
-- Reusable Component Architecture
-
----
-
-## 🔮 Future Enhancements
-
-### Backend Integration
-- REST API
-- Authentication
-- Authorization
-
-### Database
-- MongoDB
-- PostgreSQL
-- MySQL
-
-### AI Features
-- AI Task Generation
-- AI Project Summaries
-- Productivity Recommendations
-- Smart Prioritization
-
----
-
-## 👨‍💻 Author
-
-**Syed Nazeer**
-
-GitHub:
-https://github.com/Syed-Nazeer-07
-
----
-
-## 📄 License
-
-This project is intended for educational and portfolio purposes.
-
-## Week 3 Summary
-- Integrated a dedicated API client layer in \src/lib/api.ts\ for data fetching.
-- Updated the Zustand store to fetch users, projects, and tasks from the backend instead of using mock data.
-- Updated the \DashboardLayout.tsx\ and components to properly reflect loading and error states.
-- Connected \CreateProjectModal\, \CreateTaskModal\, and \TaskCard\ to the live API for creating, updating, and deleting operations.
-- Fixed TypeScript strict errors relating to the newly integrated models and \
-ull\ user cases.
+## Build & Testing
+- Backend: Built successfully with `tsc`. Tested API endpoints via Postman/local testing.
+- Frontend: Built successfully with `next build`. Evaluated rendering, auth context, and UI functionality.

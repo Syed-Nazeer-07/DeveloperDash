@@ -17,7 +17,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task }: TaskCardProps) {
-  const { updateTask, deleteTask, currentUser, addActivity, projects } = useStore();
+  const { updateTask, deleteTask, currentUser, addActivity, projects, addNotification } = useStore();
   const [isUpdating, setIsUpdating] = useState(false);
   const project = projects.find(p => p.id === task.projectId);
 
@@ -39,7 +39,19 @@ export function TaskCard({ task }: TaskCardProps) {
     try {
       const updatedTask = await api.updateTask(task.id, { status: newStatus });
       updateTask(task.id, updatedTask);
-      addActivity({ userId: currentUser.id, action: `moved task to ${newStatus}`, target: task.title });
+      
+      const userId = currentUser.id || (currentUser as any)._id;
+      addActivity({ userId, action: `moved task to ${newStatus}`, target: task.title });
+      
+      if (newStatus === 'Completed') {
+        addNotification({
+          title: 'Task Completed',
+          message: `Task "${task.title}" was marked as completed.`,
+          read: false,
+          link: `/tasks/${task.id || (task as any)._id}`,
+        });
+      }
+      
       toast.success(`Task marked as ${newStatus}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to update task status');

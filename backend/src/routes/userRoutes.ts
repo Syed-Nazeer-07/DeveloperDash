@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import * as userController from '../controllers/userController';
+import { protect } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/', userController.getUsers);
-router.get('/:id', userController.getUser);
-router.post('/', userController.createUser);
-router.put('/:id', userController.updateUser);
-router.delete('/:id', userController.deleteUser);
+router.use(protect as any);
+router.get('/', userController.getUsers as any);
+router.get('/:id', userController.getUser as any);
+router.post('/', userController.createUser as any);
+router.put('/:id', userController.updateUser as any);
+router.delete('/:id', userController.deleteUser as any);
 
 export default router;

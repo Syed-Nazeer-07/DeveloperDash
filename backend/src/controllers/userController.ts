@@ -1,20 +1,20 @@
-import { Request, Response, NextFunction } from 'express';
-import * as userService from '../services/userService';
-import { userSchema } from '../validators';
+import { Response, NextFunction } from 'express';
+import User from '../models/User';
 import { sendSuccess, sendError } from '../utils/response';
+import { AuthRequest } from '../middleware/auth';
 
-export const getUsers = (req: Request, res: Response, next: NextFunction) => {
+export const getUsers = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const users = userService.getAllUsers();
+    const users = await User.find({});
     return sendSuccess(res, users);
   } catch (error) {
     next(error);
   }
 };
 
-export const getUser = (req: Request, res: Response, next: NextFunction) => {
+export const getUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const user = userService.getUserById(req.params.id as string);
+    const user = await User.findById(req.params.id);
     if (!user) return sendError(res, 'User not found', 404);
     return sendSuccess(res, user);
   } catch (error) {
@@ -22,20 +22,19 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export const createUser = (req: Request, res: Response, next: NextFunction) => {
+export const createUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  // Normally handled by register, but leaving for compat
   try {
-    const validatedData = userSchema.parse(req.body);
-    const user = userService.createUser(validatedData);
+    const user = await User.create(req.body);
     return sendSuccess(res, user, 201);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateUser = (req: Request, res: Response, next: NextFunction) => {
+export const updateUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const validatedData = userSchema.partial().parse(req.body);
-    const user = userService.updateUser(req.params.id as string, validatedData);
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!user) return sendError(res, 'User not found', 404);
     return sendSuccess(res, user);
   } catch (error) {
@@ -43,10 +42,10 @@ export const updateUser = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export const deleteUser = (req: Request, res: Response, next: NextFunction) => {
+export const deleteUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const success = userService.deleteUser(req.params.id as string);
-    if (!success) return sendError(res, 'User not found', 404);
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return sendError(res, 'User not found', 404);
     return sendSuccess(res, null);
   } catch (error) {
     next(error);

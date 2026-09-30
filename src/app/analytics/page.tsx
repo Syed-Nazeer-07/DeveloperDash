@@ -3,10 +3,13 @@
 import { useStore } from '@/store';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line } from 'recharts';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line } from 'recharts';
+import { PieChart } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const { tasks, projects } = useStore();
+
+  const hasData = tasks.length > 0 || projects.length > 0;
 
   const statusData = [
     { name: 'Todo', value: tasks.filter(t => t.status === 'Todo').length },
@@ -17,15 +20,39 @@ export default function AnalyticsPage() {
 
   const projectData = projects.map(p => ({
     name: p.name,
-    progress: p.progress
+    progress: p.progress || 0
   }));
 
-  const timelineData = [
-    { name: 'Week 1', completed: 2 },
-    { name: 'Week 2', completed: 5 },
-    { name: 'Week 3', completed: 3 },
-    { name: 'Week 4', completed: tasks.filter(t => t.status === 'Completed').length },
-  ];
+  const recentDays = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split('T')[0];
+  });
+  
+  const timelineData = recentDays.map(dateStr => {
+    const completed = tasks.filter(t => {
+      if (t.status !== 'Completed') return false;
+      const tDate = (t as any).updatedAt || t.dueDate || new Date().toISOString();
+      return tDate.startsWith(dateStr);
+    }).length;
+    return { name: dateStr.split('-').slice(1).join('/'), completed };
+  });
+
+  if (!hasData) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col gap-8 max-w-7xl mx-auto h-[70vh] items-center justify-center text-center">
+          <div className="rounded-full bg-muted p-6 mb-4">
+            <PieChart className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">No Analytics Yet</h1>
+          <p className="text-muted-foreground mt-2 max-w-md">
+            Create some projects and tasks to start seeing insights and productivity metrics here.
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -44,7 +71,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <RechartsPieChart>
                   <Pie
                     data={statusData}
                     cx="50%"
@@ -62,7 +89,7 @@ export default function AnalyticsPage() {
                   </Pie>
                   <Tooltip />
                   <Legend />
-                </PieChart>
+                </RechartsPieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
