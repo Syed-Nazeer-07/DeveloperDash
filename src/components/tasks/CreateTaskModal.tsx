@@ -9,10 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useStore } from '@/store';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { api } from '@/lib/api';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -25,7 +29,7 @@ const taskSchema = z.object({
 export function CreateTaskModal() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addTask, projects, currentUser, addActivity } = useStore();
+  const { addTask, projects, currentUser, addActivity, addNotification } = useStore();
   
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -49,13 +53,24 @@ export function CreateTaskModal() {
         projectId: values.projectId,
         priority: values.priority,
         status: 'Todo' as const,
-        assignee: currentUser || undefined,
+        assignee: currentUser ? (currentUser.id || (currentUser as any)._id) : undefined,
       };
       
+      console.log('Final request payload:', newTaskData);
       const createdTask = await api.createTask(newTaskData);
       
       addTask(createdTask);
-      addActivity({ userId: currentUser.id, action: 'created task', target: createdTask.title });
+      
+      const userId = currentUser.id || (currentUser as any)._id;
+      addActivity({ userId, action: 'created task', target: createdTask.title });
+      
+      addNotification({
+        title: 'New Task Created',
+        message: `You created task "${createdTask.title}"`,
+        read: false,
+        link: `/tasks/${createdTask.id || (createdTask as any)._id}`,
+      });
+      
       toast.success('Task created successfully');
       setOpen(false);
       form.reset();
@@ -104,7 +119,7 @@ export function CreateTaskModal() {
                     </FormControl>
                     <SelectContent>
                       {projects.map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        <SelectItem key={(p as any)._id || p.id} value={(p as any)._id || p.id} label={p.name}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -134,19 +149,7 @@ export function CreateTaskModal() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="dueDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="dueDate" render={({ field }) => ( <FormItem className="flex flex-col mt-2"> <FormLabel>Due Date</FormLabel> <Popover> <FormControl> <PopoverTrigger render={ <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors h-10", !field.value && "text-muted-foreground")} /> } > {field.value ? ( format(new Date(field.value), "PPP") ) : ( <span>Pick a date</span> )} <CalendarIcon className="ml-auto h-5 w-5 opacity-70" /> </PopoverTrigger> </FormControl> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value ? new Date(field.value) : undefined} onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")} /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )} />
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Creating...' : 'Create Task'}
@@ -158,3 +161,6 @@ export function CreateTaskModal() {
     </Dialog>
   );
 }
+
+
+

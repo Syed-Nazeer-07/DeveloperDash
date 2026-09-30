@@ -17,7 +17,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated && !['/login', '/register'].includes(pathname)) {
-        router.push('/register');
+        router.push('/login');
       } else if (isAuthenticated && ['/login', '/register'].includes(pathname)) {
         router.push('/');
       }

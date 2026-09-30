@@ -11,6 +11,8 @@ import { ArrowLeft, CalendarIcon, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { TaskCard } from '@/components/tasks/TaskCard';
+import { api } from '@/lib/api';
+import { useState } from 'react';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -35,11 +37,21 @@ export default function ProjectDetailsPage() {
 
   const projectTasks = tasks.filter(t => t.projectId === project.id);
 
-  const handleDelete = () => {
-    deleteProject(project.id);
-    addActivity({ userId: currentUser.id, action: 'deleted project', target: project.name });
-    toast.success('Project deleted');
-    router.push('/projects');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!currentUser) return;
+    setIsDeleting(true);
+    try {
+      await api.deleteProject(project.id);
+      deleteProject(project.id);
+      addActivity({ userId: currentUser.id, action: 'deleted project', target: project.name });
+      toast.success('Project deleted');
+      router.push('/projects');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete project');
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -59,8 +71,9 @@ export default function ProjectDetailsPage() {
                 <p className="text-muted-foreground mt-2">{project.description}</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => toast.info('Edit functionality pending')}><Edit className="h-4 w-4 mr-2"/> Edit</Button>
-                <Button variant="destructive" onClick={handleDelete}><Trash2 className="h-4 w-4 mr-2"/> Delete</Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                  <Trash2 className="h-4 w-4 mr-2"/> {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
               </div>
             </div>
           </div>

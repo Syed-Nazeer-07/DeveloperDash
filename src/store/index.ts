@@ -1,8 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Project, Task, Activity, Notification, Settings, User } from '../types';
-import { defaultSettings } from '../data/mockData';
 import { api } from '../lib/api';
+
+const defaultSettings: Settings = {
+  appearance: {
+    theme: 'system',
+  },
+  notifications: {
+    email: true,
+    push: true,
+    projectUpdates: true,
+  }
+};
 
 interface DashboardState {
   currentUser: User | null;
@@ -35,6 +45,7 @@ interface DashboardState {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   deleteNotification: (id: string) => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
   
   settings: Settings;
   updateSettings: (updates: Partial<Settings>) => void;
@@ -61,7 +72,7 @@ export const useStore = create<DashboardState>()(
         set({ isLoadingUsers: true, errorUsers: null });
         try {
           const users = await api.fetchUsers();
-          set({ users, isLoadingUsers: false, currentUser: users[0] || null });
+          set({ users, isLoadingUsers: false });
         } catch (error: any) {
           set({ errorUsers: error.message, isLoadingUsers: false });
         }
@@ -127,6 +138,16 @@ export const useStore = create<DashboardState>()(
       })),
       deleteNotification: (id) => set((state) => ({
         notifications: state.notifications.filter((n) => n.id !== id)
+      })),
+      addNotification: (notification) => set((state) => ({
+        notifications: [
+          {
+            ...notification,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            timestamp: new Date().toISOString(),
+          } as Notification,
+          ...state.notifications
+        ]
       })),
       
       settings: defaultSettings,

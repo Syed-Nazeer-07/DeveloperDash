@@ -78,7 +78,7 @@ export function AIGenerateTasksModal() {
               </SelectTrigger>
               <SelectContent>
                 {projects.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  <SelectItem key={(p as any)._id || p.id} value={(p as any)._id || p.id} label={p.name}>{p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -106,3 +106,4 @@ export function AIGenerateTasksModal() {
     </Dialog>
   );
 }
+

@@ -1,13 +1,12 @@
 "use client";
 
 import { useStore } from '@/store';
-import { mockUsers } from '@/data/mockData';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 
 export function ActivityTimeline() {
-  const { activities, currentUser } = useStore();
+  const { activities, currentUser, users } = useStore();
 
   if (!currentUser) return null;
 
@@ -19,7 +18,7 @@ export function ActivityTimeline() {
       <CardContent>
         <div className="space-y-8">
           {activities.slice(0, 10).map((activity, index) => {
-            const user = activity.userId === currentUser.id ? currentUser : mockUsers.find(u => u.id === activity.userId);
+            const user = activity.userId === currentUser.id ? currentUser : users.find(u => u.id === activity.userId || (u as any)._id === activity.userId);
             
             return (
               <div key={activity.id} className="relative flex gap-4">

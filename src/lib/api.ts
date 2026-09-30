@@ -49,6 +49,17 @@ export const api = {
     return json.data;
   },
 
+  async updateUser(id: string, updates: any): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Failed to update user');
+    return json.data;
+  },
+
   async fetchUsers(): Promise<User[]> {
     const res = await fetch(`${API_BASE_URL}/users`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch users');
